@@ -3,11 +3,13 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List
 
 from aiogram import Bot, Dispatcher, F, types
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
+from aiogram.filters.command import CommandObject
 
 # Python 3.9+ (aiogram3 обычно на 3.10+)
 try:
@@ -22,19 +24,14 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
     raise RuntimeError("❌ BOT_TOKEN не найден. Добавь переменную окружения BOT_TOKEN.")
 
-# ✅ Твой Telegram ID администратора (куда будут приходить заказы)
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
 if ADMIN_ID == 0:
     logging.warning("⚠️ ADMIN_ID не задан. Заказы не будут отправляться админу.")
 
-# ✅ Твой рабочий GitHub Pages (можно переопределить переменной окружения WEBAPP_URL)
-WEBAPP_URL = os.getenv(
-    "WEBAPP_URL",
-    "https://tahirovdd-lang.github.io/lora-flower-bot/?v=1"
-)
+WEBAPP_URL = os.getenv("WEBAPP_URL", "https://tahirovdd-lang.github.io/lora-flower-bot/?v=1")
 
-# Файл для счётчика заказов (дата + счетчик)
 COUNTER_FILE = Path(os.getenv("ORDER_COUNTER_FILE", "order_counter.json"))
+ORDERS_FILE = Path(os.getenv("ORDERS_FILE", "orders.json"))
 
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 dp = Dispatcher()
@@ -56,7 +53,7 @@ def safe_str(x) -> str:
 
 def get_next_order_id(prefix: str = "FL") -> str:
     """
-    Генерирует ID вида: FL-20260129-0007 (дата + счетчик).
+    ID: FL-20260129-0007 (дата + счетчик).
     Счётчик хранится в order_counter.json (если хостинг даёт запись на диск).
     """
     today = now_local().strftime("%Y%m%d")
@@ -76,18 +73,11 @@ def get_next_order_id(prefix: str = "FL") -> str:
     try:
         COUNTER_FILE.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     except Exception:
-        # Если нельзя писать в файл — всё равно отдадим ID (но счетчик сбросится после перезапуска)
         pass
 
     return f"{prefix}-{today}-{data['counter']:04d}"
 
 def normalize_delivery_type(payload: dict) -> str:
-    """
-    Возвращает 'Доставка' / 'Самовывоз'
-    Поддерживает разные ключи из WebApp:
-    - customer.deliveryType / customer.delivery_type / customer.delivery
-    - deliveryType / delivery_type
-    """
     customer = payload.get("customer", {}) or {}
     val = (
         customer.get("deliveryType")
@@ -101,17 +91,11 @@ def normalize_delivery_type(payload: dict) -> str:
         return "Самовывоз"
     if s in {"delivery", "доставка", "courier", "курьер"}:
         return "Доставка"
-    # если адрес указан — вероятнее доставка
     if customer.get("address"):
         return "Доставка"
     return "Самовывоз"
 
 def normalize_payment_method(payload: dict) -> str:
-    """
-    Возвращает 'Наличными' / 'Click' / 'Картой' (если пришло)
-    Поддерживает разные ключи:
-    - customer.paymentMethod / paymentMethod / payment_method
-    """
     customer = payload.get("customer", {}) or {}
     val = (
         customer.get("paymentMethod")
@@ -128,8 +112,79 @@ def normalize_payment_method(payload: dict) -> str:
         return "Click"
     if s in {"card", "картой", "карта", "uzcard", "humo"}:
         return "Картой"
-    # если не пришло — по умолчанию
     return "Наличными"
+
+def status_human(s: str) -> str:
+    s = (s or "").strip().lower()
+    mapping = {
+        "accepted": "Принят",
+        "created": "Принят",
+        "assembling": "Собирается",
+        "courier": "Курьер выехал",
+        "delivered": "Доставлено",
+        "canceled": "Отменён",
+        "принят": "Принят",
+        "собирается": "Собирается",
+        "курьер_выехал": "Курьер выехал",
+        "доставлено": "Доставлено",
+        "отменен": "Отменён",
+        "отменён": "Отменён",
+    }
+    return mapping.get(s, s.capitalize() if s else "Принят")
+
+def safe_read_json(path: Path, default: Any) -> Any:
+    try:
+        if path.exists():
+            return json.loads(path.read_text(encoding="utf-8") or "null") or default
+    except Exception:
+        pass
+    return default
+
+def safe_write_json(path: Path, data: Any) -> None:
+    try:
+        path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+
+def store_order(order: Dict[str, Any]) -> None:
+    """
+    Храним все заказы в ORDERS_FILE как список объектов.
+    """
+    db = safe_read_json(ORDERS_FILE, default=[])
+    if not isinstance(db, list):
+        db = []
+    db.append(order)
+    safe_write_json(ORDERS_FILE, db)
+
+def update_order_status(order_id: str, new_status: str) -> Dict[str, Any] | None:
+    db = safe_read_json(ORDERS_FILE, default=[])
+    if not isinstance(db, list):
+        return None
+    found = None
+    for o in db:
+        if str(o.get("orderId")) == str(order_id):
+            o["status"] = new_status
+            o["statusUpdatedAt"] = now_local().strftime("%Y-%m-%d %H:%M:%S")
+            found = o
+            break
+    if found:
+        safe_write_json(ORDERS_FILE, db)
+    return found
+
+def get_user_orders(tg_id: int, limit: int = 10) -> List[Dict[str, Any]]:
+    db = safe_read_json(ORDERS_FILE, default=[])
+    if not isinstance(db, list):
+        return []
+    user_orders = [o for o in db if int(o.get("tgId", 0) or 0) == int(tg_id)]
+    user_orders.sort(key=lambda x: safe_str(x.get("createdAt")), reverse=True)
+    return user_orders[:limit]
+
+def get_last_orders(limit: int = 10) -> List[Dict[str, Any]]:
+    db = safe_read_json(ORDERS_FILE, default=[])
+    if not isinstance(db, list):
+        return []
+    db.sort(key=lambda x: safe_str(x.get("createdAt")), reverse=True)
+    return db[:limit]
 
 def format_order_for_admin(message: types.Message, order: dict) -> str:
     user = message.from_user
@@ -143,14 +198,21 @@ def format_order_for_admin(message: types.Message, order: dict) -> str:
     currency = safe_str(order.get("currency", "UZS"))
     order_id = safe_str(order.get("orderId"))
     created_at = safe_str(order.get("createdAt"))
+    status = status_human(order.get("status") or "Принят")
 
     delivery_type = normalize_delivery_type(order)
     payment = normalize_payment_method(order)
 
+    delivery_fee = int(order.get("deliveryFee", 0) or 0)
+    zone = safe_str(order.get("zone", customer.get("zone")))
+    slot = safe_str(order.get("deliverySlot", customer.get("deliverySlot")))
+    urgent = bool(order.get("urgent") or customer.get("urgent"))
+
     lines = []
     lines.append("🌸 <b>Новый заказ FLORA</b>")
-    lines.append(f"🧾 <b>Номер заказа:</b> <code>{order_id}</code>")
-    lines.append(f"⏱ <b>Дата/время:</b> {created_at}")
+    lines.append(f"🧾 <b>Номер:</b> <code>{order_id}</code>")
+    lines.append(f"⏱ <b>Время:</b> {created_at}")
+    lines.append(f"📍 <b>Статус:</b> <b>{status}</b>")
     lines.append("")
     lines.append("👤 <b>Клиент (Telegram):</b>")
     lines.append(f"• Ник: <b>{tg_username}</b>")
@@ -162,9 +224,22 @@ def format_order_for_admin(message: types.Message, order: dict) -> str:
     lines.append(f"• Формат: <b>{delivery_type}</b>")
     if delivery_type == "Доставка":
         lines.append(f"• Адрес: {safe_str(customer.get('address'))}")
+        if zone != "—":
+            lines.append(f"• Зона: <b>{zone}</b>")
+    if slot != "—":
+        lines.append(f"• Слот: <b>{slot}</b>")
+    if urgent:
+        lines.append("• Срочно: <b>Да (60–90 мин)</b>")
+
     if customer.get("date") or customer.get("time"):
         dt = f"{safe_str(customer.get('date'))} {safe_str(customer.get('time'))}".strip()
         lines.append(f"• Когда: {dt}")
+    if customer.get("recipient"):
+        lines.append(f"• Получатель: {safe_str(customer.get('recipient'))}")
+    if customer.get("cardText"):
+        lines.append(f"• Открытка: {safe_str(customer.get('cardText'))}")
+    if customer.get("wrap"):
+        lines.append(f"• Упаковка: {safe_str(customer.get('wrap'))}")
     if customer.get("comment"):
         lines.append(f"• Комментарий: {safe_str(customer.get('comment'))}")
 
@@ -172,7 +247,7 @@ def format_order_for_admin(message: types.Message, order: dict) -> str:
     lines.append("💳 <b>Оплата:</b>")
     lines.append(f"• Способ: <b>{payment}</b>")
     lines.append("")
-    lines.append("🛍 <b>Заказ:</b>")
+    lines.append("🛍 <b>Состав:</b>")
 
     if not items:
         lines.append("• (пусто)")
@@ -184,7 +259,9 @@ def format_order_for_admin(message: types.Message, order: dict) -> str:
             lines.append(f"• {title} × {qty} — <b>{money_fmt(price)}</b> {currency}")
 
     lines.append("")
-    lines.append(f"💰 <b>Сумма:</b> <b>{money_fmt(total)}</b> {currency}")
+    if delivery_fee > 0:
+        lines.append(f"🚚 Доставка: <b>{money_fmt(delivery_fee)}</b> {currency}")
+    lines.append(f"💰 <b>Итого:</b> <b>{money_fmt(total)}</b> {currency}")
 
     return "\n".join(lines)
 
@@ -193,17 +270,19 @@ def client_confirm_text(order: dict) -> str:
     total = order.get("total", 0)
     currency = safe_str(order.get("currency", "UZS"))
     payment = normalize_payment_method(order)
+    status = status_human(order.get("status") or "Принят")
 
     if payment == "Click":
-        pay_note = "Оплата: <b>Click</b> (мы отправим реквизиты/ссылку для оплаты после подтверждения)."
+        pay_note = "Оплата: <b>Click</b> (мы отправим ссылку/реквизиты после подтверждения)."
     elif payment == "Картой":
-        pay_note = "Оплата: <b>Картой</b> (оплата при получении или по ссылке — уточним при подтверждении)."
+        pay_note = "Оплата: <b>Картой</b> (при получении или по ссылке — уточним при подтверждении)."
     else:
-        pay_note = "Оплата: <b>Наличными</b> (оплата при получении)."
+        pay_note = "Оплата: <b>Наличными</b> (при получении)."
 
     return (
         "✅ <b>Ваш заказ принят!</b>\n"
         f"🧾 Номер: <code>{order_id}</code>\n"
+        f"📍 Статус: <b>{status}</b>\n"
         f"💰 Сумма: <b>{money_fmt(total)}</b> {currency}\n"
         f"{pay_note}\n\n"
         "Мы свяжемся с вами для подтверждения."
@@ -215,7 +294,7 @@ def main_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="💐 Открыть каталог", web_app=WebAppInfo(url=WEBAPP_URL))],
-            [KeyboardButton(text="🎁 Собрать букет"), KeyboardButton(text="🔥 Акции")],
+            [KeyboardButton(text="🎁 Конструктор букета"), KeyboardButton(text="🔥 Акции")],
             [KeyboardButton(text="📦 Мои заказы"), KeyboardButton(text="📞 Связаться")]
         ],
         resize_keyboard=True
@@ -225,41 +304,102 @@ def main_keyboard() -> ReplyKeyboardMarkup:
 async def start(message: types.Message):
     text = (
         "🌸 <b>Добро пожаловать в FLORA Samarkand</b>\n"
-        "Свежие цветы • Авторские букеты • Быстрая доставка\n\n"
+        "Свежие цветы • Авторские букеты • Премиум сервис\n\n"
         "Нажмите кнопку ниже, чтобы открыть каталог 👇"
     )
     await message.answer(text, reply_markup=main_keyboard())
 
-@dp.message(F.text == "🎁 Собрать букет")
+@dp.message(F.text == "🎁 Конструктор букета")
 async def custom_bouquet(message: types.Message):
     txt = (
-        "🎁 <b>Собрать букет</b>\n\n"
-        "Напишите одним сообщением:\n"
-        "1) Повод (день рождения/любимому/свадьба/корпоратив)\n"
-        "2) Любимые цветы/цвета\n"
-        "3) Бюджет\n"
-        "4) Дата/время\n"
-        "5) Доставка или самовывоз\n"
-        "6) Адрес (если доставка)\n\n"
-        "Флорист свяжется с вами для подтверждения."
+        "🎁 <b>Конструктор букета</b>\n\n"
+        "Откройте каталог и нажмите «🎁 Конструктор букета» внутри приложения.\n"
+        "Там будет мастер-подбор: повод → цвета → настроение → бюджет → упаковка → открытка → доставка."
     )
-    await message.answer(txt)
+    await message.answer(txt, reply_markup=main_keyboard())
 
 @dp.message(F.text == "🔥 Акции")
 async def promo(message: types.Message):
-    await message.answer("🔥 Акции пока не настроены. Скоро добавим!\nОткройте каталог: 💐 Открыть каталог")
+    await message.answer("🔥 Акции появятся в ближайшем обновлении.\nОткройте каталог: 💐 Открыть каталог", reply_markup=main_keyboard())
 
 @dp.message(F.text == "📦 Мои заказы")
 async def my_orders(message: types.Message):
-    await message.answer("📦 История заказов будет добавлена в следующей версии. Сейчас заказы оформляются через каталог.")
+    orders = get_user_orders(message.from_user.id, limit=10)
+    if not orders:
+        await message.answer("📦 У вас пока нет заказов. Откройте каталог и оформите первый 🌸", reply_markup=main_keyboard())
+        return
+
+    lines = ["📦 <b>Ваши последние заказы:</b>"]
+    for o in orders[:10]:
+        oid = safe_str(o.get("orderId"))
+        total = money_fmt(int(o.get("total", 0) or 0))
+        cur = safe_str(o.get("currency", "UZS"))
+        st = status_human(o.get("status") or "Принят")
+        created = safe_str(o.get("createdAt"))
+        lines.append(f"• <code>{oid}</code> — <b>{total}</b> {cur} — <b>{st}</b>  <span class='tg-spoiler'>({created})</span>")
+
+    lines.append("\nЕсли нужно — напишите сюда, мы поможем 🙌")
+    await message.answer("\n".join(lines), reply_markup=main_keyboard())
 
 @dp.message(F.text == "📞 Связаться")
 async def contact(message: types.Message):
     await message.answer(
         "📞 <b>Связаться с FLORA</b>\n\n"
         "Напишите сюда в чат — мы ответим.\n"
-        "Контакты/адрес можно добавить сюда (позже вставим)."
+        "Также можете оформить заказ через каталог 👇",
+        reply_markup=main_keyboard()
     )
+
+# --- Admin: last orders
+@dp.message(Command("orders"))
+async def admin_orders(message: types.Message):
+    if ADMIN_ID and message.from_user.id != ADMIN_ID:
+        return
+    last = get_last_orders(limit=10)
+    if not last:
+        await message.answer("Пока нет заказов.")
+        return
+    lines = ["🗂 <b>Последние заказы:</b>"]
+    for o in last:
+        oid = safe_str(o.get("orderId"))
+        total = money_fmt(int(o.get("total", 0) or 0))
+        cur = safe_str(o.get("currency", "UZS"))
+        st = status_human(o.get("status") or "Принят")
+        lines.append(f"• <code>{oid}</code> — <b>{total}</b> {cur} — <b>{st}</b>")
+    lines.append("\nКоманда смены статуса:\n<code>/setstatus FL-20260129-0007 courier</code>")
+    await message.answer("\n".join(lines))
+
+# --- Admin: set status + notify client
+@dp.message(Command("setstatus"))
+async def admin_setstatus(message: types.Message, command: CommandObject):
+    if ADMIN_ID and message.from_user.id != ADMIN_ID:
+        return
+
+    args = (command.args or "").strip()
+    if not args:
+        await message.answer("Использование:\n<code>/setstatus FL-20260129-0007 courier</code>\nСтатусы: accepted/assembling/courier/delivered/canceled")
+        return
+
+    parts = args.split(maxsplit=1)
+    if len(parts) < 2:
+        await message.answer("Нужно 2 аргумента:\n<code>/setstatus ORDER_ID STATUS</code>")
+        return
+
+    order_id, new_status = parts[0].strip(), parts[1].strip()
+    updated = update_order_status(order_id, new_status)
+    if not updated:
+        await message.answer("Не нашёл такой заказ в базе (orders.json).")
+        return
+
+    human = status_human(new_status)
+    await message.answer(f"✅ Статус обновлён: <code>{order_id}</code> → <b>{human}</b>")
+
+    tg_id = int(updated.get("tgId", 0) or 0)
+    if tg_id:
+        try:
+            await bot.send_message(tg_id, f"📦 Заказ <code>{order_id}</code>\nСтатус: <b>{human}</b>")
+        except Exception as e:
+            logging.exception("Не удалось уведомить клиента: %s", e)
 
 # Приём данных из WebApp: message.web_app_data.data
 @dp.message(F.web_app_data)
@@ -269,26 +409,38 @@ async def on_webapp_data(message: types.Message):
     try:
         payload = json.loads(raw)
     except Exception:
-        await message.answer("❌ Не удалось прочитать заказ. Попробуйте ещё раз.")
+        await message.answer("❌ Не удалось прочитать заказ. Попробуйте ещё раз.", reply_markup=main_keyboard())
         return
 
-    # Ожидаем заказы как {"type":"order", ...}
     if payload.get("type") != "order":
-        await message.answer("✅ Данные получены.")
+        await message.answer("✅ Данные получены.", reply_markup=main_keyboard())
         return
 
-    # Подставим orderId если WebApp не прислал
+    # orderId если WebApp не прислал
     if not payload.get("orderId"):
         payload["orderId"] = get_next_order_id("FL")
 
-    # Подставим createdAt если нет
+    # createdAt если нет
     if not payload.get("createdAt"):
         payload["createdAt"] = now_local().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Пользователю — подтверждение с правильным способом оплаты
+    # Статус по умолчанию
+    if not payload.get("status"):
+        payload["status"] = "accepted"
+
+    # Привяжем заказ к Telegram
+    u = message.from_user
+    payload["tgId"] = u.id if u else 0
+    payload["tgUsername"] = f"@{u.username}" if u and u.username else ""
+    payload["tgName"] = " ".join([p for p in [getattr(u, "first_name", ""), getattr(u, "last_name", "")] if p]).strip()
+
+    # Сохраним (если можно)
+    store_order(payload)
+
+    # Пользователю
     await message.answer(client_confirm_text(payload), reply_markup=main_keyboard())
 
-    # Админу — полный заказ (ник, телефон, номер, дата+счетчик, доставка/самовывоз, оплата, сумма, состав)
+    # Админу
     if ADMIN_ID != 0:
         text = format_order_for_admin(message, payload)
         try:
