@@ -15,12 +15,11 @@
       --muted:#6b7280;
       --green:#1e8e5a;
       --green2:#16794b;
-      --chip:#eef2f6;
       --shadow:0 10px 24px rgba(0,0,0,.08);
-      --radius:18px;
       --radius2:22px;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-top: env(safe-area-inset-top, 0px);
+      --line:#eef0f4;
     }
 
     *{box-sizing:border-box}
@@ -31,7 +30,6 @@
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
     }
 
-    /* Top spacing for Telegram */
     .wrap{
       padding: calc(12px + var(--safe-top)) 14px 110px;
       max-width: 980px;
@@ -58,20 +56,19 @@
     }
 
     .logo{
-      width: 46px;
-      height: 46px;
+      width: 44px;
+      height: 44px;
       border-radius: 14px;
       object-fit: contain;
       background: #0b0b0b;
       padding: 6px;
+      flex-shrink: 0;
     }
 
-    .brand-text{
-      min-width: 0;
-    }
+    .brand-text{min-width: 0;}
     .brand-title{
-      font-size: 22px;
-      font-weight: 800;
+      font-size: 20px;
+      font-weight: 900;
       line-height: 1.1;
       white-space: nowrap;
       overflow: hidden;
@@ -79,7 +76,7 @@
     }
     .brand-sub{
       margin-top: 4px;
-      font-size: 14px;
+      font-size: 13px;
       color: var(--muted);
       white-space: nowrap;
       overflow: hidden;
@@ -112,7 +109,7 @@
       right:-6px;
       background: var(--green);
       color:#fff;
-      font-weight:800;
+      font-weight:900;
       font-size:12px;
       min-width: 22px;
       height: 22px;
@@ -135,11 +132,11 @@
     .pill{
       background: var(--card);
       border: 1px solid #e6e8ee;
-      padding: 10px 12px;
+      padding: 9px 12px;
       border-radius: 999px;
       color: #1f2937;
-      font-weight: 700;
-      font-size: 14px;
+      font-weight: 800;
+      font-size: 13px;
       cursor:pointer;
       user-select:none;
     }
@@ -168,7 +165,7 @@
       position: relative;
       display:flex;
       flex-direction:column;
-      min-height: 380px;
+      min-height: 360px;
     }
 
     .img{
@@ -185,9 +182,9 @@
       left: 10px;
       background: #111827;
       color:#fff;
-      font-weight: 800;
+      font-weight: 900;
       padding: 7px 10px;
-      font-size: 13px;
+      font-size: 12px;
       border-radius: 999px;
       opacity: .92;
     }
@@ -215,15 +212,16 @@
       padding: 14px 14px 12px;
       display:flex;
       flex-direction:column;
-      gap: 10px;
+      gap: 9px;
       flex: 1;
     }
 
+    /* ✅ уменьшили название букетов */
     .title{
-      font-size: 20px;
-      font-weight: 900;
+      font-size: 17px;
+      font-weight: 950;
       letter-spacing: -.2px;
-      line-height: 1.1;
+      line-height: 1.15;
     }
 
     .chips{
@@ -237,9 +235,9 @@
       color: var(--green2);
       border: 1px solid #cfe9dc;
       font-weight: 900;
-      padding: 8px 10px;
+      padding: 7px 9px;
       border-radius: 999px;
-      font-size: 14px;
+      font-size: 13px;
       display:flex;
       align-items:center;
       gap: 7px;
@@ -250,49 +248,46 @@
       border-color: #cddcff;
       color: #2952cc;
     }
-    .chip.out{
-      background: #f3f4f6;
-      border-color: #e5e7eb;
-      color: #6b7280;
-      font-weight: 800;
-    }
 
     .desc{
       color: var(--muted);
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.35;
       overflow: hidden;
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
-      min-height: calc(14px * 1.35 * 3); /* ровная высота для всех карточек */
+      min-height: calc(13px * 1.35 * 3);
     }
 
-    /* Footer row inside card — FIX PRICE ALIGNMENT */
+    /* ✅ фикс кнопки "+ в корзину" — теперь нормально видна */
     .bottom{
       margin-top: auto;
       display:flex;
       align-items:flex-end;
       justify-content:space-between;
-      gap: 12px;
-      padding-top: 4px;
+      gap: 10px;
+      padding-top: 2px;
     }
 
     .price{
       display:flex;
       flex-direction:column;
       gap: 2px;
-      min-width: 120px;
+      min-width: 110px;
+      flex: 1;
     }
+
+    /* ✅ уменьшили сумму */
     .price .val{
-      font-size: 30px;
+      font-size: 24px;
       font-weight: 950;
-      line-height: 1;  /* ✅ чтобы не расползалось */
-      letter-spacing: -.5px;
-      white-space: nowrap; /* ✅ не переносится в 2 ряда */
+      line-height: 1;
+      letter-spacing: -.4px;
+      white-space: nowrap;
     }
     .price .cur{
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 900;
       color:#111827;
       line-height: 1.1;
@@ -306,22 +301,20 @@
       color:#fff;
       font-weight: 950;
       border-radius: 18px;
-      padding: 12px 14px;
-      min-width: 132px;
+      padding: 12px 12px;
       cursor:pointer;
       user-select:none;
       display:flex;
       align-items:center;
       justify-content:center;
       gap: 8px;
+
+      /* ключевой фикс */
+      width: 128px;
+      flex: 0 0 128px; /* ✅ не уезжает вправо и всегда видно */
       box-shadow: 0 10px 18px rgba(30,142,90,.25);
     }
     .add:active{transform: scale(.99)}
-    .add[disabled]{
-      background:#c9ced6;
-      box-shadow:none;
-      cursor:not-allowed;
-    }
 
     /* Bottom cart bar */
     .cartbar{
@@ -345,18 +338,16 @@
       justify-content:space-between;
       gap: 12px;
     }
-    .sum{
-      min-width: 0;
-    }
+    .sum{min-width: 0;}
     .sum strong{
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 950;
     }
     .sum small{
       display:block;
       color: var(--muted);
       margin-top: 4px;
-      font-weight: 700;
+      font-weight: 800;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -376,7 +367,7 @@
     }
     .open-cart:active{transform: scale(.99)}
 
-    /* Modal */
+    /* Modal (cart + settings) */
     .modal{
       position: fixed;
       inset: 0;
@@ -399,7 +390,7 @@
       display:flex;
       align-items:center;
       justify-content:space-between;
-      border-bottom: 1px solid #eef0f4;
+      border-bottom: 1px solid var(--line);
     }
     .sheet-head b{font-size: 16px}
     .x{
@@ -414,6 +405,16 @@
       max-height: 70vh;
       overflow:auto;
     }
+    .sheet-foot{
+      padding: 12px 14px;
+      border-top: 1px solid var(--line);
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content:space-between;
+      align-items:center;
+    }
+
     .cart-item{
       display:flex;
       justify-content:space-between;
@@ -422,8 +423,8 @@
       border-bottom: 1px solid #f1f3f7;
     }
     .cart-item:last-child{border-bottom:none}
-    .ci-title{font-weight: 900}
-    .ci-sub{color: var(--muted); font-size: 13px; margin-top: 4px}
+    .ci-title{font-weight: 950; font-size: 14px}
+    .ci-sub{color: var(--muted); font-size: 12px; margin-top: 4px}
 
     .qty{
       display:flex;
@@ -440,16 +441,6 @@
     }
     .qnum{min-width: 20px; text-align:center; font-weight: 950}
 
-    .sheet-foot{
-      padding: 12px 14px;
-      border-top: 1px solid #eef0f4;
-      display:flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content:space-between;
-      align-items:center;
-    }
-
     .btn{
       border:none;
       border-radius: 18px;
@@ -458,10 +449,7 @@
       cursor:pointer;
       user-select:none;
     }
-    .btn.secondary{
-      background:#eef2f6;
-      color:#111827;
-    }
+    .btn.secondary{background:#eef2f6; color:#111827;}
     .btn.primary{
       background: var(--green);
       color:#fff;
@@ -469,7 +457,6 @@
       min-width: 220px;
     }
 
-    /* Simple form */
     .form{
       display:grid;
       grid-template-columns: 1fr;
@@ -478,8 +465,8 @@
     }
     .field label{
       display:block;
-      font-size: 13px;
-      font-weight: 900;
+      font-size: 12px;
+      font-weight: 950;
       color: #111827;
       margin-bottom: 6px;
     }
@@ -493,15 +480,34 @@
       background:#fff;
     }
     .field textarea{min-height: 86px; resize: vertical}
+
     .row2{
       display:grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
+
+    .settings-row{
+      display:flex;
+      gap:10px;
+      flex-wrap: wrap;
+      align-items:center;
+      margin-top: 10px;
+    }
+    .select{
+      flex: 1 1 180px;
+      border: 1px solid #e6e8ee;
+      border-radius: 16px;
+      padding: 12px 12px;
+      background:#fff;
+      font-weight: 900;
+    }
+
     @media (max-width: 420px){
       .row2{grid-template-columns: 1fr;}
       .open-cart{min-width: 150px;}
-      .price .val{font-size: 28px}
+      .price .val{font-size: 22px}
+      .add{width: 120px; flex-basis: 120px;}
     }
   </style>
 </head>
@@ -509,25 +515,19 @@
 <body>
   <div class="wrap">
 
-    <!-- Header -->
     <div class="topbar">
       <div class="brand">
-        <!-- ✅ ЛОГО: положи logo.png рядом с index.html -->
         <img class="logo" src="./logo.png" alt="FLORA" />
         <div class="brand-text">
           <div class="brand-title">FLORA Samarkand</div>
-          <!-- ✅ Убрали “слотами / дорого / выглядит” -->
           <div class="brand-sub">Premium букеты • Доставка • Самовывоз</div>
         </div>
       </div>
 
+      <!-- ✅ вернули панель как была: настройки + профиль + корзина -->
       <div class="actions">
-        <!-- ✅ Связаться с админом -->
-        <button class="icon-btn" id="btnContact" title="Связаться">
-          ☎️
-        </button>
-
-        <!-- Корзина -->
+        <button class="icon-btn" id="btnSettings" title="Настройки">⚙️</button>
+        <button class="icon-btn" id="btnProfile" title="Профиль">👤</button>
         <button class="icon-btn" id="btnCart" title="Корзина">
           🛒
           <span class="badge" id="cartCount">0</span>
@@ -535,14 +535,10 @@
       </div>
     </div>
 
-    <!-- Filters -->
     <div class="filters" id="filters"></div>
-
-    <!-- Products grid -->
     <div class="grid" id="grid"></div>
   </div>
 
-  <!-- Bottom cart bar -->
   <div class="cartbar">
     <div class="cartbar-inner">
       <div class="sum">
@@ -553,12 +549,12 @@
     </div>
   </div>
 
-  <!-- Modal / Cart -->
-  <div class="modal" id="modal">
+  <!-- CART MODAL -->
+  <div class="modal" id="cartModal">
     <div class="sheet">
       <div class="sheet-head">
         <b>Корзина</b>
-        <button class="x" id="closeModal">✕</button>
+        <button class="x" id="closeCart">✕</button>
       </div>
 
       <div class="sheet-body">
@@ -623,46 +619,75 @@
     </div>
   </div>
 
+  <!-- SETTINGS MODAL -->
+  <div class="modal" id="settingsModal">
+    <div class="sheet">
+      <div class="sheet-head">
+        <b>Настройки</b>
+        <button class="x" id="closeSettings">✕</button>
+      </div>
+      <div class="sheet-body">
+        <div class="field">
+          <label>Зона доставки</label>
+          <select class="select" id="zoneSelect">
+            <option value="center">Центр</option>
+            <option value="near">Близко</option>
+            <option value="far">Далеко</option>
+          </select>
+        </div>
+
+        <div class="settings-row">
+          <div class="field" style="flex:1 1 220px;">
+            <label>Скорость</label>
+            <select class="select" id="speedSelect">
+              <option value="60-90">60–90 мин</option>
+              <option value="90-120">90–120 мин</option>
+            </select>
+          </div>
+
+          <div class="field" style="flex:1 1 220px;">
+            <label>Доставка</label>
+            <select class="select" id="deliveryFeeSelect">
+              <option value="25000">25 000 UZS</option>
+              <option value="35000">35 000 UZS</option>
+              <option value="45000">45 000 UZS</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:10px;">
+          <label>Заметка (показывается снизу)</label>
+          <input id="noteInput" placeholder="Например: Доставка по Самарканду" />
+        </div>
+
+        <div style="margin-top:12px;color:var(--muted);font-weight:800;font-size:13px;line-height:1.35">
+          Эти настройки влияют на строку под итогом (внизу экрана).
+        </div>
+      </div>
+
+      <div class="sheet-foot">
+        <button class="btn secondary" id="resetSettingsBtn">Сброс</button>
+        <button class="btn primary" id="saveSettingsBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
 <script>
-  // ---------------- Telegram WebApp ---------------
   const tg = window.Telegram?.WebApp;
-  if (tg) {
-    tg.expand();
-    tg.ready();
-  }
+  if (tg) { tg.expand(); tg.ready(); }
 
-  // Admin link (по твоему admin_id)
-  const ADMIN_TG_ID = 6013591658;
-
-  function openAdminChat(){
-    // Работает внутри Telegram
-    if (tg && tg.openTelegramLink) {
-      tg.openTelegramLink(`tg://user?id=${ADMIN_TG_ID}`);
-      return;
-    }
-    // fallback
-    window.location.href = `tg://user?id=${ADMIN_TG_ID}`;
-  }
-
-  document.getElementById("btnContact").addEventListener("click", openAdminChat);
-
-  // ---------------- Data (ассортимент) ------------
-  // ✅ Реальные фото цветов: Unsplash (можно менять на свои фото)
+  // ---------- DATA ----------
   const products = [
-    {id:"rose_25_red", title:"25 красных роз", price:350000, currency:"UZS", tag:"hit", chips:["Быстро"], desc:"Классика для особого случая. Сильный вау-эффект.", img:"https://images.unsplash.com/photo-1541873676-a18131494184?auto=format&fit=crop&w=1200&q=80"},
-    {id:"mix_pastel", title:"Нежный микс (пастель)", price:280000, currency:"UZS", tag:"new", chips:["Быстро","Premium"], desc:"Воздушный сборный букет, очень эстетичный.", img:"https://images.unsplash.com/photo-1524592714635-d77511a4834d?auto=format&fit=crop&w=1200&q=80"},
-    {id:"tulip_31", title:"31 тюльпан (микс)", price:240000, currency:"UZS", tag:"season", chips:["Быстро"], desc:"Сезонный топ: ярко, свежо, нежно.", img:"https://images.unsplash.com/photo-1526045431048-f857369baa09?auto=format&fit=crop&w=1200&q=80"},
-    {id:"peony_soft", title:"Пионы (нежные)", price:420000, currency:"UZS", tag:"limited", chips:["Premium"], desc:"Пионы — роскошь в каждом лепестке.", img:"https://images.unsplash.com/photo-1559563362-c667ba5f5480?auto=format&fit=crop&w=1200&q=80"},
-    {id:"rose_51", title:"51 роза (красные)", price:690000, currency:"UZS", tag:"hit", chips:["Premium"], desc:"Большой букет — сильное впечатление.", img:"https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80"},
-    {id:"rose_15_white", title:"15 белых роз", price:220000, currency:"UZS", tag:"", chips:["Быстро"], desc:"Чистота и нежность. Подходит на любой повод.", img:"https://images.unsplash.com/photo-1504198453319-5ce911bafcde?auto=format&fit=crop&w=1200&q=80"},
-    {id:"box_heart", title:"Коробка сердце", price:390000, currency:"UZS", tag:"new", chips:["Premium"], desc:"Подарок “под ключ” — красиво и удобно.", img:"https://images.unsplash.com/photo-1526045478516-99145907023c?auto=format&fit=crop&w=1200&q=80"},
-    {id:"lily_white", title:"Лилии белые", price:310000, currency:"UZS", tag:"", chips:["Premium"], desc:"Ароматный букет, выглядит дорого и стильно.", img:"https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1200&q=80"},
-    {id:"sunflower", title:"Подсолнухи", price:180000, currency:"UZS", tag:"season", chips:["Быстро"], desc:"Солнечный букет, поднимает настроение.", img:"https://images.unsplash.com/photo-1508615070457-7baeba4003ab?auto=format&fit=crop&w=1200&q=80"},
-    {id:"orchid", title:"Орхидеи", price:480000, currency:"UZS", tag:"limited", chips:["Premium"], desc:"Премиум-композиция, аккуратно и изысканно.", img:"https://images.unsplash.com/photo-1519682337058-a94d519337bc?auto=format&fit=crop&w=1200&q=80"},
-    {id:"mix_bright", title:"Яркий микс", price:260000, currency:"UZS", tag:"", chips:["Быстро"], desc:"Сборный букет с яркими акцентами.", img:"https://images.unsplash.com/photo-1518709766631-a6a7f45921c3?auto=format&fit=crop&w=1200&q=80"},
-    {id:"pink_rose_25", title:"25 роз (розовые)", price:360000, currency:"UZS", tag:"new", chips:["Быстро"], desc:"Нежный романтичный вариант.", img:"https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=80"},
-    {id:"chamomile", title:"Ромашки (букет)", price:150000, currency:"UZS", tag:"season", chips:["Быстро"], desc:"Легкий летний букет.", img:"https://images.unsplash.com/photo-1468327768560-75b778cbb551?auto=format&fit=crop&w=1200&q=80"},
-    {id:"mix_purple", title:"Фиолетовый микс", price:300000, currency:"UZS", tag:"", chips:["Premium"], desc:"Глубокие оттенки, эффектно смотрится.", img:"https://images.unsplash.com/photo-1523952578875-6a2a5ed0f8d0?auto=format&fit=crop&w=1200&q=80"}
+    {id:"rose_25_red", title:"25 красных роз", price:350000, currency:"UZS", tag:"hit", chips:["Быстро"], desc:"Классика для особого случая.", img:"https://images.unsplash.com/photo-1541873676-a18131494184?auto=format&fit=crop&w=1200&q=80"},
+    {id:"mix_pastel", title:"Нежный микс", price:280000, currency:"UZS", tag:"new", chips:["Быстро","Premium"], desc:"Лёгкий сборный букет.", img:"https://images.unsplash.com/photo-1524592714635-d77511a4834d?auto=format&fit=crop&w=1200&q=80"},
+    {id:"tulip_31", title:"31 тюльпан (микс)", price:240000, currency:"UZS", tag:"season", chips:["Быстро"], desc:"Сезонный топ.", img:"https://images.unsplash.com/photo-1526045431048-f857369baa09?auto=format&fit=crop&w=1200&q=80"},
+    {id:"peony_soft", title:"Пионы (нежные)", price:420000, currency:"UZS", tag:"limited", chips:["Premium"], desc:"Роскошь в лепестках.", img:"https://images.unsplash.com/photo-1559563362-c667ba5f5480?auto=format&fit=crop&w=1200&q=80"},
+    {id:"rose_51", title:"51 роза (красные)", price:690000, currency:"UZS", tag:"hit", chips:["Premium"], desc:"Большой вау-эффект.", img:"https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80"},
+    {id:"rose_15_white", title:"15 белых роз", price:220000, currency:"UZS", tag:"", chips:["Быстро"], desc:"Нежно и чисто.", img:"https://images.unsplash.com/photo-1504198453319-5ce911bafcde?auto=format&fit=crop&w=1200&q=80"},
+    {id:"box_heart", title:"Коробка сердце", price:390000, currency:"UZS", tag:"new", chips:["Premium"], desc:"Подарок “под ключ”.", img:"https://images.unsplash.com/photo-1526045478516-99145907023c?auto=format&fit=crop&w=1200&q=80"},
+    {id:"mix_bright", title:"Яркий микс", price:260000, currency:"UZS", tag:"", chips:["Быстро"], desc:"Яркие акценты.", img:"https://images.unsplash.com/photo-1518709766631-a6a7f45921c3?auto=format&fit=crop&w=1200&q=80"},
+    {id:"pink_rose_25", title:"25 роз (розовые)", price:360000, currency:"UZS", tag:"new", chips:["Быстро"], desc:"Романтичный вариант.", img:"https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=80"},
+    {id:"orchid", title:"Орхидеи", price:480000, currency:"UZS", tag:"limited", chips:["Premium"], desc:"Изысканная композиция.", img:"https://images.unsplash.com/photo-1519682337058-a94d519337bc?auto=format&fit=crop&w=1200&q=80"},
   ];
 
   const categories = [
@@ -674,20 +699,41 @@
     {key:"premium", name:"Premium"}
   ];
 
-  // ---------------- State ----------------
+  // ---------- STATE ----------
   let activeCat = "all";
   const cart = new Map(); // id -> qty
 
+  // settings state
+  const SETTINGS_KEY = "flora_settings_v1";
+  let settings = {
+    zoneText: "Центр",
+    speedText: "60–90 мин",
+    deliveryFee: 25000,
+    note: ""
+  };
+
+  // ---------- ELEMENTS ----------
   const filtersEl = document.getElementById("filters");
   const gridEl = document.getElementById("grid");
   const cartCountEl = document.getElementById("cartCount");
   const sumTextEl = document.getElementById("sumText");
-  const cartBtn = document.getElementById("btnCart");
-  const openCartBtn = document.getElementById("openCartBtn");
+  const sumSubEl = document.getElementById("sumSub");
 
-  // Modal
-  const modal = document.getElementById("modal");
-  const closeModal = document.getElementById("closeModal");
+  // modals
+  const cartModal = document.getElementById("cartModal");
+  const settingsModal = document.getElementById("settingsModal");
+
+  // buttons
+  const btnCart = document.getElementById("btnCart");
+  const openCartBtn = document.getElementById("openCartBtn");
+  const closeCart = document.getElementById("closeCart");
+
+  const btnSettings = document.getElementById("btnSettings");
+  const closeSettings = document.getElementById("closeSettings");
+
+  const btnProfile = document.getElementById("btnProfile");
+
+  // cart
   const cartList = document.getElementById("cartList");
   const clearCartBtn = document.getElementById("clearCartBtn");
   const checkoutBtn = document.getElementById("checkoutBtn");
@@ -703,13 +749,66 @@
   const cTime = document.getElementById("cTime");
   const cComment = document.getElementById("cComment");
 
-  function setAddressVisibility(){
-    addressField.style.display = (cDeliveryType.value === "delivery") ? "block" : "none";
-  }
-  cDeliveryType.addEventListener("change", setAddressVisibility);
-  setAddressVisibility();
+  // settings fields
+  const zoneSelect = document.getElementById("zoneSelect");
+  const speedSelect = document.getElementById("speedSelect");
+  const deliveryFeeSelect = document.getElementById("deliveryFeeSelect");
+  const noteInput = document.getElementById("noteInput");
+  const resetSettingsBtn = document.getElementById("resetSettingsBtn");
+  const saveSettingsBtn = document.getElementById("saveSettingsBtn");
 
-  // ---------------- Render ----------------
+  function money(n){ return new Intl.NumberFormat("ru-RU").format(Number(n||0)); }
+
+  // ---------- SETTINGS ----------
+  function applySettingsToSub(){
+    const note = (settings.note || "").trim();
+    const notePart = note ? ` • ${note}` : "";
+    sumSubEl.textContent = `Зона: ${settings.zoneText} • ${settings.speedText} • Доставка ${money(settings.deliveryFee)} UZS${notePart}`;
+  }
+
+  function loadSettings(){
+    try{
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if(raw){
+        const s = JSON.parse(raw);
+        if(s && typeof s === "object"){
+          settings = { ...settings, ...s };
+        }
+      }
+    }catch(e){}
+    // sync ui
+    zoneSelect.value = settings.zoneText === "Центр" ? "center" : (settings.zoneText === "Близко" ? "near" : "far");
+    speedSelect.value = settings.speedText === "90–120 мин" ? "90-120" : "60-90";
+    deliveryFeeSelect.value = String(settings.deliveryFee || 25000);
+    noteInput.value = settings.note || "";
+    applySettingsToSub();
+  }
+
+  function saveSettings(){
+    try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }catch(e){}
+    applySettingsToSub();
+  }
+
+  function resetSettings(){
+    settings = { zoneText:"Центр", speedText:"60–90 мин", deliveryFee:25000, note:"" };
+    zoneSelect.value = "center";
+    speedSelect.value = "60-90";
+    deliveryFeeSelect.value = "25000";
+    noteInput.value = "";
+    saveSettings();
+  }
+
+  resetSettingsBtn.onclick = ()=>{ resetSettings(); };
+  saveSettingsBtn.onclick = ()=>{
+    settings.zoneText = zoneSelect.value === "center" ? "Центр" : (zoneSelect.value === "near" ? "Близко" : "Далеко");
+    settings.speedText = speedSelect.value === "90-120" ? "90–120 мин" : "60–90 мин";
+    settings.deliveryFee = parseInt(deliveryFeeSelect.value || "25000", 10);
+    settings.note = noteInput.value || "";
+    saveSettings();
+    closeModal(settingsModal);
+  };
+
+  // ---------- FILTERS / GRID ----------
   function renderFilters(){
     filtersEl.innerHTML = "";
     categories.forEach(cat=>{
@@ -809,30 +908,19 @@
 
       bottom.appendChild(price);
       bottom.appendChild(add);
-
       content.appendChild(bottom);
-
       card.appendChild(content);
       gridEl.appendChild(card);
     });
   }
 
-  function money(n){
-    return new Intl.NumberFormat("ru-RU").format(Number(n||0));
-  }
-
+  // ---------- CART ----------
   function getCartItems(){
     const items = [];
     cart.forEach((qty, id)=>{
       const p = products.find(x=>x.id===id);
       if (!p) return;
-      items.push({
-        id,
-        title: p.title,
-        qty,
-        price: p.price,
-        currency: p.currency || "UZS"
-      });
+      items.push({ id, title:p.title, qty, price:p.price, currency:p.currency || "UZS" });
     });
     return items;
   }
@@ -846,20 +934,10 @@
     return total;
   }
 
-  function updateCartUI(){
-    const count = Array.from(cart.values()).reduce((a,b)=>a+b,0);
-    cartCountEl.textContent = String(count);
-
-    const total = calcTotal();
-    sumTextEl.textContent = `Итого: ${money(total)} UZS`;
-
-    renderCartList();
-  }
-
   function renderCartList(){
     const items = getCartItems();
     if (!items.length){
-      cartList.innerHTML = "<div style='color:#6b7280;font-weight:800'>Корзина пустая.</div>";
+      cartList.innerHTML = "<div style='color:#6b7280;font-weight:900'>Корзина пустая.</div>";
       return;
     }
 
@@ -918,56 +996,82 @@
     });
   }
 
-  // ---------------- Modal controls ----------------
-  function openModal(){
-    modal.classList.add("show");
-  }
-  function closeModalFn(){
-    modal.classList.remove("show");
-  }
-  cartBtn.onclick = openModal;
-  openCartBtn.onclick = openModal;
-  closeModal.onclick = closeModalFn;
-  modal.addEventListener("click", (e)=>{
-    if (e.target === modal) closeModalFn();
-  });
+  function updateCartUI(){
+    const count = Array.from(cart.values()).reduce((a,b)=>a+b,0);
+    cartCountEl.textContent = String(count);
 
-  clearCartBtn.onclick = ()=>{
-    cart.clear();
-    updateCartUI();
+    const total = calcTotal();
+    sumTextEl.textContent = `Итого: ${money(total)} UZS`;
+
+    renderCartList();
+  }
+
+  // ---------- MODALS ----------
+  function openModal(el){ el.classList.add("show"); }
+  function closeModal(el){ el.classList.remove("show"); }
+
+  btnCart.onclick = ()=>openModal(cartModal);
+  openCartBtn.onclick = ()=>openModal(cartModal);
+  closeCart.onclick = ()=>closeModal(cartModal);
+
+  btnSettings.onclick = ()=>openModal(settingsModal);
+  closeSettings.onclick = ()=>closeModal(settingsModal);
+
+  // click outside
+  cartModal.addEventListener("click", (e)=>{ if(e.target===cartModal) closeModal(cartModal); });
+  settingsModal.addEventListener("click", (e)=>{ if(e.target===settingsModal) closeModal(settingsModal); });
+
+  clearCartBtn.onclick = ()=>{ cart.clear(); updateCartUI(); };
+
+  // профиль — пока просто показывает подсказку
+  btnProfile.onclick = ()=>{
+    if (tg?.showPopup){
+      tg.showPopup({
+        title: "Профиль",
+        message: "Функция профиля будет добавлена в следующей версии.",
+        buttons: [{type:"ok", text:"OK"}]
+      });
+    } else {
+      alert("Профиль будет добавлен позже.");
+    }
   };
 
-  // ---------------- Checkout -> send to bot ----------------
+  // address visibility
+  function setAddressVisibility(){
+    addressField.style.display = (cDeliveryType.value === "delivery") ? "block" : "none";
+  }
+  cDeliveryType.addEventListener("change", setAddressVisibility);
+  setAddressVisibility();
+
+  // ---------- CHECKOUT ----------
   checkoutBtn.onclick = ()=>{
     const items = getCartItems();
     if (!items.length){
-      if (tg?.showAlert) tg.showAlert("Корзина пустая.");
-      else alert("Корзина пустая.");
+      tg?.showAlert ? tg.showAlert("Корзина пустая.") : alert("Корзина пустая.");
       return;
     }
-
     const deliveryType = cDeliveryType.value; // delivery/pickup
     const paymentMethod = cPayment.value;     // cash/click
 
     if (!cPhone.value.trim()){
-      if (tg?.showAlert) tg.showAlert("Введите телефон.");
-      else alert("Введите телефон.");
+      tg?.showAlert ? tg.showAlert("Введите телефон.") : alert("Введите телефон.");
       return;
     }
-
     if (deliveryType === "delivery" && !cAddress.value.trim()){
-      if (tg?.showAlert) tg.showAlert("Введите адрес доставки.");
-      else alert("Введите адрес доставки.");
+      tg?.showAlert ? tg.showAlert("Введите адрес доставки.") : alert("Введите адрес доставки.");
       return;
     }
 
+    const total = calcTotal();
     const order = {
       type: "order",
-      // orderId может создать бот, но можно и тут оставить пустым
       orderId: "",
       createdAt: new Date().toISOString(),
       currency: "UZS",
-      total: calcTotal(),
+      total: total,
+      deliveryFee: settings.deliveryFee,
+      zone: settings.zoneText,
+      deliverySlot: settings.speedText,
       customer: {
         name: cName.value.trim(),
         phone: cPhone.value.trim(),
@@ -982,22 +1086,17 @@
     };
 
     const data = JSON.stringify(order);
-
-    // Отправляем боту через WebAppData
     if (tg && tg.sendData) {
       tg.sendData(data);
-      // Закрываем корзину
-      closeModalFn();
-      // Можно закрыть WebApp после отправки:
-      // tg.close();
+      closeModal(cartModal);
     } else {
-      // fallback (если открыть не из Telegram)
-      console.log("WebAppData:", order);
-      alert("Откройте это приложение внутри Telegram, чтобы оформить заказ.");
+      console.log(order);
+      alert("Откройте приложение внутри Telegram, чтобы оформить заказ.");
     }
   };
 
-  // Init
+  // ---------- INIT ----------
+  loadSettings();
   renderFilters();
   renderGrid();
   updateCartUI();
