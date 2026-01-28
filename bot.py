@@ -11,7 +11,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 from aiogram.filters.command import CommandObject
 
-# Python 3.9+ (aiogram3 обычно на 3.10+)
+# Python 3.9+
 try:
     from zoneinfo import ZoneInfo
     TZ = ZoneInfo("Asia/Tashkent")
@@ -20,13 +20,17 @@ except Exception:
 
 logging.basicConfig(level=logging.INFO)
 
+# -------------------- CONFIG --------------------
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
     raise RuntimeError("❌ BOT_TOKEN не найден. Добавь переменную окружения BOT_TOKEN.")
 
-ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
-if ADMIN_ID == 0:
-    logging.warning("⚠️ ADMIN_ID не задан. Заказы не будут отправляться админу.")
+# ✅ BotHost может не давать задать ADMIN_ID в ENV — поэтому делаем надёжно:
+# 1) пробуем ENV ADMIN_ID
+# 2) если не получилось — используем захардкоженный ID
+ADMIN_ID_ENV = os.getenv("ADMIN_ID", "").strip()
+ADMIN_ID_HARDCODE = 6013591658  # ✅ твой ID админа
+ADMIN_ID = int(ADMIN_ID_ENV) if ADMIN_ID_ENV.isdigit() else ADMIN_ID_HARDCODE
 
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://tahirovdd-lang.github.io/lora-flower-bot/?v=1")
 
@@ -37,7 +41,7 @@ bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 dp = Dispatcher()
 
 
-# ---------- Helpers ----------
+# -------------------- HELPERS --------------------
 def now_local() -> datetime:
     return datetime.now(TZ) if TZ else datetime.now()
 
@@ -52,10 +56,7 @@ def safe_str(x) -> str:
     return "—" if x is None or str(x).strip() == "" else str(x).strip()
 
 def get_next_order_id(prefix: str = "FL") -> str:
-    """
-    ID: FL-20260129-0007 (дата + счетчик).
-    Счётчик хранится в order_counter.json (если хостинг даёт запись на диск).
-    """
+    """ID: FL-YYYYMMDD-0007 (дата + счетчик)."""
     today = now_local().strftime("%Y%m%d")
     data = {"date": today, "counter": 0}
 
@@ -147,9 +148,6 @@ def safe_write_json(path: Path, data: Any) -> None:
         pass
 
 def store_order(order: Dict[str, Any]) -> None:
-    """
-    Храним все заказы в ORDERS_FILE как список объектов.
-    """
     db = safe_read_json(ORDERS_FILE, default=[])
     if not isinstance(db, list):
         db = []
@@ -198,7 +196,7 @@ def format_order_for_admin(message: types.Message, order: dict) -> str:
     currency = safe_str(order.get("currency", "UZS"))
     order_id = safe_str(order.get("orderId"))
     created_at = safe_str(order.get("createdAt"))
-    status = status_human(order.get("status") or "Принят")
+    status = status_human(order.get("status") or "accepted")
 
     delivery_type = normalize_delivery_type(order)
     payment = normalize_payment_method(order)
@@ -270,7 +268,7 @@ def client_confirm_text(order: dict) -> str:
     total = order.get("total", 0)
     currency = safe_str(order.get("currency", "UZS"))
     payment = normalize_payment_method(order)
-    status = status_human(order.get("status") or "Принят")
+    status = status_human(order.get("status") or "accepted")
 
     if payment == "Click":
         pay_note = "Оплата: <b>Click</b> (мы отправим ссылку/реквизиты после подтверждения)."
@@ -289,7 +287,7 @@ def client_confirm_text(order: dict) -> str:
     )
 
 
-# ---------- Keyboards / Handlers ----------
+# -------------------- UI --------------------
 def main_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
@@ -300,6 +298,7 @@ def main_keyboard() -> ReplyKeyboardMarkup:
         resize_keyboard=True
     )
 
+# -------------------- HANDLERS --------------------
 @dp.message(CommandStart())
 async def start(message: types.Message):
     text = (
@@ -320,7 +319,10 @@ async def custom_bouquet(message: types.Message):
 
 @dp.message(F.text == "🔥 Акции")
 async def promo(message: types.Message):
-    await message.answer("🔥 Акции появятся в ближайшем обновлении.\nОткройте каталог: 💐 Открыть каталог", reply_markup=main_keyboard())
+    await message.answer(
+        "🔥 Акции появятся в ближайшем обновлении.\nОткройте каталог: 💐 Открыть каталог",
+        reply_markup=main_keyboard()
+    )
 
 @dp.message(F.text == "📦 Мои заказы")
 async def my_orders(message: types.Message):
@@ -334,9 +336,9 @@ async def my_orders(message: types.Message):
         oid = safe_str(o.get("orderId"))
         total = money_fmt(int(o.get("total", 0) or 0))
         cur = safe_str(o.get("currency", "UZS"))
-        st = status_human(o.get("status") or "Принят")
+        st = status_human(o.get("status") or "accepted")
         created = safe_str(o.get("createdAt"))
-        lines.append(f"• <code>{oid}</code> — <b>{total}</b> {cur} — <b>{st}</b>  <span class='tg-spoiler'>({created})</span>")
+        lines.append(f"• <code>{oid}</code> — <b>{total}</b> {cur} — <b>{st}</b> ({created})")
 
     lines.append("\nЕсли нужно — напишите сюда, мы поможем 🙌")
     await message.answer("\n".join(lines), reply_markup=main_keyboard())
@@ -353,7 +355,7 @@ async def contact(message: types.Message):
 # --- Admin: last orders
 @dp.message(Command("orders"))
 async def admin_orders(message: types.Message):
-    if ADMIN_ID and message.from_user.id != ADMIN_ID:
+    if message.from_user.id != ADMIN_ID:
         return
     last = get_last_orders(limit=10)
     if not last:
@@ -364,7 +366,7 @@ async def admin_orders(message: types.Message):
         oid = safe_str(o.get("orderId"))
         total = money_fmt(int(o.get("total", 0) or 0))
         cur = safe_str(o.get("currency", "UZS"))
-        st = status_human(o.get("status") or "Принят")
+        st = status_human(o.get("status") or "accepted")
         lines.append(f"• <code>{oid}</code> — <b>{total}</b> {cur} — <b>{st}</b>")
     lines.append("\nКоманда смены статуса:\n<code>/setstatus FL-20260129-0007 courier</code>")
     await message.answer("\n".join(lines))
@@ -372,12 +374,15 @@ async def admin_orders(message: types.Message):
 # --- Admin: set status + notify client
 @dp.message(Command("setstatus"))
 async def admin_setstatus(message: types.Message, command: CommandObject):
-    if ADMIN_ID and message.from_user.id != ADMIN_ID:
+    if message.from_user.id != ADMIN_ID:
         return
 
     args = (command.args or "").strip()
     if not args:
-        await message.answer("Использование:\n<code>/setstatus FL-20260129-0007 courier</code>\nСтатусы: accepted/assembling/courier/delivered/canceled")
+        await message.answer(
+            "Использование:\n<code>/setstatus FL-20260129-0007 courier</code>\n"
+            "Статусы: accepted/assembling/courier/delivered/canceled"
+        )
         return
 
     parts = args.split(maxsplit=1)
@@ -401,7 +406,7 @@ async def admin_setstatus(message: types.Message, command: CommandObject):
         except Exception as e:
             logging.exception("Не удалось уведомить клиента: %s", e)
 
-# Приём данных из WebApp: message.web_app_data.data
+# --- WebApp data
 @dp.message(F.web_app_data)
 async def on_webapp_data(message: types.Message):
     raw = message.web_app_data.data
@@ -424,32 +429,32 @@ async def on_webapp_data(message: types.Message):
     if not payload.get("createdAt"):
         payload["createdAt"] = now_local().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Статус по умолчанию
+    # статус по умолчанию
     if not payload.get("status"):
         payload["status"] = "accepted"
 
-    # Привяжем заказ к Telegram
+    # привязка к Telegram
     u = message.from_user
     payload["tgId"] = u.id if u else 0
     payload["tgUsername"] = f"@{u.username}" if u and u.username else ""
     payload["tgName"] = " ".join([p for p in [getattr(u, "first_name", ""), getattr(u, "last_name", "")] if p]).strip()
 
-    # Сохраним (если можно)
+    # сохранить
     store_order(payload)
 
-    # Пользователю
+    # клиенту
     await message.answer(client_confirm_text(payload), reply_markup=main_keyboard())
 
-    # Админу
-    if ADMIN_ID != 0:
-        text = format_order_for_admin(message, payload)
-        try:
-            await bot.send_message(ADMIN_ID, text)
-        except Exception as e:
-            logging.exception("Не удалось отправить админу: %s", e)
+    # админу
+    text = format_order_for_admin(message, payload)
+    try:
+        await bot.send_message(ADMIN_ID, text)
+    except Exception as e:
+        logging.exception("Не удалось отправить админу: %s", e)
 
 async def main():
     logging.info("🚀 FLORA bot started")
+    logging.info("Admin ID: %s", ADMIN_ID)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
